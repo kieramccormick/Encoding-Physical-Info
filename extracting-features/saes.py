@@ -16,6 +16,9 @@ from functools import partial
 import tqdm.notebook as tqdm
 import plotly.express as px
 import pandas as pd
+from html import escape
+import colorsys
+from IPython.display import display
 
 """## Defining the Autoencoder"""
 
@@ -73,23 +76,6 @@ class AutoEncoder(nn.Module):
         W_dec_normed = self.W_dec / self.W_dec.norm(dim=-1, keepdim=True)
         W_dec_grad_proj = (self.W_dec.grad * W_dec_normed).sum(-1, keepdim=True) * W_dec_normed
         self.W_dec.grad -= W_dec_grad_proj
-
-    # def get_version(self):
-    #     return 1+max([int(file.name.split(".")[0]) for file in list(SAVE_DIR.iterdir()) if "pt" in str(file)])
-
-    # def save(self):
-    #     version = self.get_version()
-    #     torch.save(self.state_dict(), SAVE_DIR/(str(version)+".pt"))
-    #     with open(SAVE_DIR/(str(version)+"_cfg.json"), "w") as f:
-    #         json.dump(cfg, f)
-    #     print("Saved as version", version)
-
-    # def load(cls, version):
-    #     cfg = (json.load(open(SAVE_DIR/(str(version)+"_cfg.json"), "r")))
-    #     pprint.pprint(cfg)
-    #     self = cls(cfg=cfg)
-    #     self.load_state_dict(torch.load(SAVE_DIR/(str(version)+".pt")))
-    #     return self
 
     @classmethod
     def load_from_hf(cls, version):
@@ -177,11 +163,6 @@ def get_freqs(num_batches=25, local_encoder=None):
 
 """## Visualise Feature Utils"""
 
-from html import escape
-import colorsys
-
-from IPython.display import display
-
 SPACE = "·"
 NEWLINE="↩"
 TAB = "→"
@@ -238,9 +219,6 @@ def basic_feature_vis(text, feature_index, max_val=0):
     feature_acts = F.relu((mlp_acts - encoder.b_dec) @ feature_in + feature_bias)
     if max_val==0:
         max_val = max(1e-7, feature_acts.max().item())
-        # print(max_val)
-    # if min_val==0:
-    #     min_val = min(-1e-7, feature_acts.min().item())
     return basic_token_vis_make_str(text, feature_acts, max_val)
 def basic_token_vis_make_str(strings, values, max_val=None):
     if not isinstance(strings, list):
@@ -248,18 +226,10 @@ def basic_token_vis_make_str(strings, values, max_val=None):
     values = utils.to_numpy(values)
     if max_val is None:
         max_val = values.max()
-    # if min_val is None:
-    #     min_val = values.min()
     header_string = f"<h4>Max Range <b>{values.max():.4f}</b> Min Range: <b>{values.min():.4f}</b></h4>"
     header_string += f"<h4>Set Max Range <b>{max_val:.4f}</b></h4>"
-    # values[values>0] = values[values>0]/ma|x_val
-    # values[values<0] = values[values<0]/abs(min_val)
     body_string = create_html(strings, values, max_value=max_val, return_string=True)
     return header_string + body_string
-# display(HTML(basic_token_vis_make_str(tokens[0, :10], mlp_acts[0, :10, 7], 0.1)))
-# # %%
-# The `with gr.Blocks() as demo:` syntax just creates a variable called demo containing all these components
-import gradio as gr
 try:
     demos[0].close()
 except:
@@ -278,14 +248,10 @@ def make_feature_vis_gradio(feature_id, starting_text=None, batch=None, pos=None
         with gr.Row():
             with gr.Column():
                 text = gr.Textbox(label="Text", value=starting_text)
-                # Precision=0 makes it an int, otherwise it's a float
-                # Value sets the initial default value
                 feature_index = gr.Number(
                     label="Feature Index", value=feature_id, precision=0
                 )
-                # # If empty, these two map to None
                 max_val = gr.Number(label="Max Value", value=None)
-                # min_val = gr.Number(label="Min Value", value=None)
                 inputs = [text, feature_index, max_val]
         with gr.Row():
             with gr.Column():
@@ -349,10 +315,6 @@ def make_token_df(tokens, len_prefix=10, len_suffix=10):
     pos = []
     label = []
     for b in range(tokens.shape[0]):
-        # context.append([])
-        # batch.append([])
-        # pos.append([])
-        # label.append([])
         for p in range(tokens.shape[1]):
             prefix = "".join(str_tokens[b][max(0, p-len_prefix):p])
             if p==tokens.shape[1]-1:
@@ -364,7 +326,6 @@ def make_token_df(tokens, len_prefix=10, len_suffix=10):
             batch.append(b)
             pos.append(p)
             label.append(f"{b}/{p}")
-    # print(len(batch), len(pos), len(context), len(label))
     return pd.DataFrame(dict(
         str_tokens=list_flatten(str_tokens),
         unique_token=list_flatten(unique_token),
