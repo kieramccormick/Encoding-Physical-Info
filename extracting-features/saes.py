@@ -20,7 +20,7 @@ from html import escape
 import colorsys
 from IPython.display import display
 
-"""## Defining the Autoencoder"""
+# Define the Autoencoder
 
 cfg = {
     "seed": 49,
@@ -98,10 +98,7 @@ class AutoEncoder(nn.Module):
         self.load_state_dict(utils.download_file_from_hf("NeelNanda/sparse_autoencoder", f"{version}.pt", force_is_torch=True))
         return self
 
-"""## Utils
-
-### Get Reconstruction Loss
-"""
+# Reconstruction loss
 
 def replacement_hook(mlp_post, hook, encoder):
     mlp_post_reconstr = encoder(mlp_post)[1]
@@ -124,7 +121,6 @@ def get_recons_loss(num_batches=5, local_encoder=None):
         tokens = all_tokens[torch.randperm(len(all_tokens))[:cfg["model_batch_size"]]]
         loss = model(tokens, return_type="loss")
         recons_loss = model.run_with_hooks(tokens, return_type="loss", fwd_hooks=[(utils.get_act_name("post", 0), partial(replacement_hook, encoder=local_encoder))])
-        # mean_abl_loss = model.run_with_hooks(tokens, return_type="loss", fwd_hooks=[(utils.get_act_name("post", 0), mean_ablate_hook)])
         zero_abl_loss = model.run_with_hooks(tokens, return_type="loss", fwd_hooks=[(utils.get_act_name("post", 0), zero_ablate_hook)])
         loss_list.append((loss, recons_loss, zero_abl_loss))
     losses = torch.tensor(loss_list)
@@ -133,12 +129,9 @@ def get_recons_loss(num_batches=5, local_encoder=None):
     print(f"loss: {loss:.4f}, recons_loss: {recons_loss:.4f}, zero_abl_loss: {zero_abl_loss:.4f}")
     score = ((zero_abl_loss - recons_loss)/(zero_abl_loss - loss))
     print(f"Reconstruction Score: {score:.2%}")
-    # print(f"{((zero_abl_loss - mean_abl_loss)/(zero_abl_loss - loss)).item():.2%}")
     return score, loss, recons_loss, zero_abl_loss
 
-"""### Get Frequencies"""
-
-# Frequency
+# Frequencies
 @torch.no_grad()
 def get_freqs(num_batches=25, local_encoder=None):
     if local_encoder is None:
@@ -160,107 +153,6 @@ def get_freqs(num_batches=25, local_encoder=None):
     num_dead = (act_freq_scores==0).float().mean()
     print("Num dead", num_dead)
     return act_freq_scores
-
-"""## Visualise Feature Utils"""
-
-SPACE = "·"
-NEWLINE="↩"
-TAB = "→"
-
-def create_html(strings, values, max_value=None, saturation=0.5, allow_different_length=False, return_string=False):
-    # escape strings to deal with tabs, newlines, etc.
-    escaped_strings = [escape(s, quote=True) for s in strings]
-    processed_strings = [
-        s.replace("\n", f"{NEWLINE}<br/>").replace("\t", f"{TAB}&emsp;").replace(" ", "&nbsp;")
-        for s in escaped_strings
-    ]
-
-    if isinstance(values, torch.Tensor) and len(values.shape)>1:
-        values = values.flatten().tolist()
-
-    if not allow_different_length:
-        assert len(processed_strings) == len(values)
-
-    # scale values
-    if max_value is None:
-        max_value = max(max(values), -min(values))+1e-3
-    scaled_values = [v / max_value * saturation for v in values]
-
-    # create html
-    html = ""
-    for i, s in enumerate(processed_strings):
-        if i<len(scaled_values):
-            v = scaled_values[i]
-        else:
-            v = 0
-        if v < 0:
-            hue = 0  # hue for red in HSV
-        else:
-            hue = 0.66  # hue for blue in HSV
-        rgb_color = colorsys.hsv_to_rgb(
-            hue, v, 1
-        )  # hsv color with hue 0.66 (blue), saturation as v, value 1
-        hex_color = "#%02x%02x%02x" % (
-            int(rgb_color[0] * 255),
-            int(rgb_color[1] * 255),
-            int(rgb_color[2] * 255),
-        )
-        html += f'<span style="background-color: {hex_color}; border: 1px solid lightgray; font-size: 16px; border-radius: 3px;">{s}</span>'
-    if return_string:
-        return html
-    else:
-        display(HTML(html))
-
-def basic_feature_vis(text, feature_index, max_val=0):
-    feature_in = encoder.W_enc[:, feature_index]
-    feature_bias = encoder.b_enc[feature_index]
-    _, cache = model.run_with_cache(text, stop_at_layer=1, names_filter=utils.get_act_name("post", 0))
-    mlp_acts = cache[utils.get_act_name("post", 0)][0]
-    feature_acts = F.relu((mlp_acts - encoder.b_dec) @ feature_in + feature_bias)
-    if max_val==0:
-        max_val = max(1e-7, feature_acts.max().item())
-    return basic_token_vis_make_str(text, feature_acts, max_val)
-def basic_token_vis_make_str(strings, values, max_val=None):
-    if not isinstance(strings, list):
-        strings = model.to_str_tokens(strings)
-    values = utils.to_numpy(values)
-    if max_val is None:
-        max_val = values.max()
-    header_string = f"<h4>Max Range <b>{values.max():.4f}</b> Min Range: <b>{values.min():.4f}</b></h4>"
-    header_string += f"<h4>Set Max Range <b>{max_val:.4f}</b></h4>"
-    body_string = create_html(strings, values, max_value=max_val, return_string=True)
-    return header_string + body_string
-try:
-    demos[0].close()
-except:
-    pass
-demos = [None]
-def make_feature_vis_gradio(feature_id, starting_text=None, batch=None, pos=None):
-    if starting_text is None:
-        starting_text = model.to_string(all_tokens[batch, 1:pos+1])
-    try:
-        demos[0].close()
-    except:
-        pass
-    with gr.Blocks() as demo:
-        gr.HTML(value=f"Hacky Interactive Neuroscope for gelu-1l")
-        # The input elements
-        with gr.Row():
-            with gr.Column():
-                text = gr.Textbox(label="Text", value=starting_text)
-                feature_index = gr.Number(
-                    label="Feature Index", value=feature_id, precision=0
-                )
-                max_val = gr.Number(label="Max Value", value=None)
-                inputs = [text, feature_index, max_val]
-        with gr.Row():
-            with gr.Column():
-                # The output element
-                out = gr.HTML(label="Neuron Acts", value=basic_feature_vis(starting_text, feature_id))
-        for inp in inputs:
-            inp.change(basic_feature_vis, inputs, out)
-    demo.launch(share=True)
-    demos[0] = demo
 
 """### Inspecting Top Logits"""
 
