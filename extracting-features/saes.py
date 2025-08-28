@@ -96,6 +96,8 @@ class AutoEncoder(nn.Module):
         self.load_state_dict(utils.download_file_from_hf("NeelNanda/sparse_autoencoder", f"{version}.pt", force_is_torch=True))
         return self
 
+# Top feature visualization tool that outputs the top words that fire for each feature
+
 DTYPES = {"fp32": torch.float32, "fp16": torch.float16, "bf16": torch.bfloat16}
 model = HookedTransformer.from_pretrained("gelu-1l").to(DTYPES["fp32"])
 sae_model = AutoEncoder.load_from_hf("run1")
