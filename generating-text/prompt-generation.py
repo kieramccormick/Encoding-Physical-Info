@@ -1,3 +1,5 @@
+# Code used for generating the LLM-generated summaries with context using the updated prompt (for astrophysical X-ray sources)
+
 import random
 import json
 import openai
@@ -152,13 +154,12 @@ def process_file_robust_with_json_handling(file_path, obsid_target, target, iden
                                             """
 
                             concatenated_context2 = answer
-                            max_tokens_allowed = 20000 # this was originally 80000, hitting TPM limit with 100000
+                            max_tokens_allowed = 20000 
                             current_token_count = estimate_token_count(concatenated_context2)
 
                             papers = data.get('papers', [])
                             print("Number of papers found:", len(papers))
                             
-                            # concatenate the structures, adding logic about the tokens because I was hitting the limit before, should probably change if I use their key
                             for i, paper in enumerate(papers):
                                 try:
                                     body_text = paper.get('body', '') + "\n"
@@ -168,7 +169,7 @@ def process_file_robust_with_json_handling(file_path, obsid_target, target, iden
                                     body_token_count = estimate_token_count(body_text)
 
                                     if current_token_count + body_token_count > max_tokens_allowed:
-                                        print(f"Token limit reached, skipping remaining papers") # this is a bandaid solution that I would like to change at some point
+                                        print(f"Token limit reached, skipping remaining papers") 
                                         break
                                     else:
                                         concatenated_context2 += body_text
@@ -296,7 +297,7 @@ def main(args):
             print(df['obsid'].values[df['obsid'].values == obsid_target][0])
             print(df['target'].values[df['obsid'].values == obsid_target][0])
         
-            # Construct the query that takes each ACIS obsID, and gets coordinates for all the sources in the obsid. bbkt, power law gamma, variability
+            # Construct the query that takes each ACIS obsID, and gets coordinates for all the sources in the obsid
             qry = f"""
             SELECT DISTINCT m.name,o.obsid,m.ra,m.dec,o.hard_hs,o.bb_kt,o.powlaw_gamma,o.var_index_b,o.var_prob_b
             FROM csc21.master_source m , csc21.master_stack_assoc a , csc21.observation_source o , 
@@ -341,7 +342,7 @@ def main(args):
             try:
                 source_flag = results[0]['source_flag']
             except:
-                source_flag = None # not too sure about adding this one in
+                source_flag = None 
 
             print(f"Found {len(results)} sources in CSC catalog for obsid {obsid_target}")
         
@@ -369,7 +370,7 @@ def main(args):
                     )
         
                     if simby is not None and hasattr(simby, '__len__') and len(simby) > 0:
-                        # Check if required columns exist, could clean up print statements and loops here
+                        # Check if required columns exist
                         has_main_id = 'main_id' in simby.colnames
                         has_otype = 'otype' in simby.colnames
                         
@@ -500,7 +501,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Runs GPT text embeddings')
     parser.add_argument('--ini_obsid', type=int, default=0, help='Index of initial obsid')
     parser.add_argument('--end_obsid', type=int, default=100, help='Index of final obsid')
-    #args = parser.parse_args()
+    #args = parser.parse_args() for submitting jobs
+    # for in-line output:
     args = parser.parse_args(args=['--ini_obsid', '0', '--end_obsid', '10'])
 
     main(args)
