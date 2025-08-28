@@ -3,5 +3,5 @@ This repository is the official code for Encoding and Understanding Astrophysica
 
 ## Requirements
 To install requirements:
-'''python
+```python
 pip install -r requirements.txt
