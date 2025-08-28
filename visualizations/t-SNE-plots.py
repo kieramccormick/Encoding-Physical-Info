@@ -1,4 +1,6 @@
 # Embedding visual for all sources with distinction between mentioned and not mentioned sources
+
+# Replace the embeddings and metadata variables with your own data
 embeddings = np.load('prompt_1_all_embeddings_simbad_test5_0_100.npy')
 metadata = pd.read_csv('prompt_1_embeddings_metadata_0_100.csv')
 
@@ -11,7 +13,7 @@ metadata['text_emb1'] = embedding_2d[:, 0]
 metadata['text_emb2'] = embedding_2d[:, 1]
 
 # Save the metadata with coordinates for correlation analysis
-metadata.to_csv('metadata_with_tsne_coords_prompt_1.csv', index=False)
+metadata.to_csv('metadata_with_tsne_coords.csv', index=False)
 
 # Map directly_mentioned column to marker styles
 marker_map = {1: 'o', 0: 's'}  # circles for mentioned, squares for general summaries
