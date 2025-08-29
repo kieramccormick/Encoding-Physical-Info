@@ -36,7 +36,7 @@ df_obsids = pd.read_csv('processed_obsids_sig_gt_5_theta_lt_5.csv',names=['obsid
 df_bright_obsids = pd.read_csv('bright_sources.csv')
 
 # CSC 2.1 TAP service
-tap = vo.dal.TAPService('http://cda.cfa.harvard.edu/csc21tap/') # For CSC 2.1, added the slash because of the VO Guide
+tap = vo.dal.TAPService('http://cda.cfa.harvard.edu/csc21tap/') # For CSC 2.1
 
 # Replace with your own API key
 client = OpenAI(api_key='xxx')
@@ -75,7 +75,7 @@ def process_file_robust_with_json_handling(file_path, obsid_target, target, iden
                     continue
                 matches_found += 1
                 
-                # target is from the target_obsid_coordinates file
+                # target is from the target_obsid_coordinates file, remove if you want to skip this step
                 prompt_question1 = f"""The target of the observation is {target}. Is this confirmed by the proposal 
                                     abstract provided, with title {data['proposal']['title']}? If so, please provide
                                     a short context about this observation.
@@ -108,8 +108,6 @@ def process_file_robust_with_json_handling(file_path, obsid_target, target, iden
                                 name_ids.append(str(idito))
                             name_ids = list(name_ids)
 
-
-                            # Read these instructions in their entirety before responding.
                             prompt_question2 = f""" 
                             Within the text you are provided with, search for information about the source identified with any of the following names:
                             {', '.join(repr(item) for item in name_ids)}.
@@ -349,7 +347,6 @@ def main(args):
             # The SIMBAD API is used here to find all the catalog sources from the previous query that have identifiers (e.g., that have been given a name other than the CSC name)
             simbad = Simbad()
             simbad.add_votable_fields("otype")
-            # could try with Ned as well
         
             # Loop through the results and query the region for each
             idents = []
