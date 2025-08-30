@@ -1,4 +1,4 @@
-# ADOPTED FROM ANTHROPIC
+# Full citation in the paper, adopted from https://github.com/neelnanda-io/1L-Sparse-Autoencoder
 
 import transformer_lens
 from transformer_lens import HookedTransformer, utils
@@ -215,6 +215,7 @@ def get_phrases_from_text(text, max_phrase_length=3):
 
     return phrases
 
+# Optional for viewing the top phrases rather than words
 def analyze_text_for_phrase_features(text, model, sae_model, layer_name="blocks.0.mlp.hook_post", max_phrase_length=3, context_window=3): 
     word_features, word_contexts = analyze_text_for_word_features(text, model, sae_model, layer_name, context_window)
     phrases = get_phrases_with_positions(text, max_phrase_length)
@@ -379,7 +380,7 @@ def display_results(results, num_features_to_show=10):
             print(f"{rank+1:2d}. {word:25s} | Avg: {avg_act:.4f} | Freq: {freq:3d} | Context: {context}")
         print()
 
-def run_analysis(dataset_name="kieramccormick/Cluster2", text_column="answer", max_samples=None, use_phrases=True, context_window=3):
+def run_analysis(dataset_name="Cluster2", text_column="answer", max_samples=None, use_phrases=True, context_window=3):
     print("Word-based analysis with complete words and phrases" if use_phrases else "Word-based analysis with complete words")
     print(f"Using context window of {context_window} words on each side\n")
 
