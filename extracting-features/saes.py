@@ -380,6 +380,7 @@ def display_results(results, num_features_to_show=10):
             print(f"{rank+1:2d}. {word:25s} | Avg: {avg_act:.4f} | Freq: {freq:3d} | Context: {context}")
         print()
 
+# Replace dataset_name with the data you want to analyze 
 def run_analysis(dataset_name="Cluster2", text_column="answer", max_samples=None, use_phrases=True, context_window=3):
     print("Word-based analysis with complete words and phrases" if use_phrases else "Word-based analysis with complete words")
     print(f"Using context window of {context_window} words on each side\n")
