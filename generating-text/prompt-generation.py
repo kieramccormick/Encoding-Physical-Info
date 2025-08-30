@@ -59,7 +59,7 @@ def stream_search_obsid(file_path, target_obsid):
     return []
 
 def process_file_robust_with_json_handling(file_path, obsid_target, target, idents, csc_names, tipos, csc_coords, 
-                                          all_embeddings, obsids, sources, coords, answers, hardness_ratios, hardness_ratio, bb_kt_list, bb_kt, powlaw_gamma_list, powlaw_gamma, var_index_b_list, var_index_b, var_prob_b_list, var_prob_b, source_flags, source_flag): # file processing changed around because of the JSON file issues I was having
+                                          all_embeddings, obsids, sources, coords, answers, hardness_ratios, hardness_ratio, bb_kt_list, bb_kt, powlaw_gamma_list, powlaw_gamma, var_index_b_list, var_index_b, var_prob_b_list, var_prob_b, source_flags, source_flag):
     
     try:
         json_objects = stream_search_obsid(file_path, obsid_target)
